@@ -1,23 +1,21 @@
-## SubStretcher
+### SubStretcher
 
-######A cure for slipping subtitles
+####A cure for slipping subtitles
 
+SubStretcher is a simple tool written in Javascript allowing you to easily reync your subtitles. Sometimes subtitles are perfectly synchronized at the begin of a movie but slips little by little. This is due to a difference of framerate between the original video used to synchronized subtitles and your video. SubStretcher fixes that problem for any .srt file. There is a bunch of other software helping to resync subtitles but none of them is as simple and fast as SubStretcher. You should really consider it if you plan to resync the 25 Simpson seasons in Uzbek ;)
 
-### What is it ?
-
-SubStretcher is a simple tool written in Javascript allowing you to easily reync your subtitles. It often happens that subtitles are perfectly synchronized at the begin of a movie but slips little by little. This is because subtitles has been synchronized with a different framerate. SubStretcher fix that problem for any .srt file.
+The current script version only stretches subtitles, you still need a .srt where the first subtitle is synchronized. The next version should bring the possibility to add a static offset.
 
 ### How to use it ?
 
-Note: The current script version only stretches subtitles, you still need a .srt where the first subtitles are synchronized. The next version should bring the possibility to add a static offset.
-
 It is really simple:
 
-- Go to [http://segfaulterror.github.io/SubStretcher/](http://segfaulterror.github.io/SubStretcher/)
-- Select the encoding of your srt file. It you don't know what is it, try `window-1252` and keep reading. 
+- Go to [http://segfaulterror.github.io/SubStretcher/](http://segfaulterror.github.io/SubStretcher/)-
+- Select the encoding of your srt file. It you don't know what is it, try `window-1252` and keep reading.
 - Select the .srt file to fix
-- The last subtitle of your .srt file appears, select the last relevant one. Usually last subtitles are authors names or the website where you download it. That's not what we want. Take the last subtitle really in the video.
-- Also check that there is no encoding error when you browse between subtitles, if weird characters appear, you should start over and select the other encoding.
-- Check your video, and write down the time where the select subtitle appears.
+- The last subtitle of your .srt file appears, browse to find the last real subtitle. Often last subtitles are authors names or the website where you download it. That's not what we want. Take the last subtitle translating something from the video. Also check that there is no encoding error when you browse between subtitles, if weird characters appear, you should start over and select another encoding.
+- Check your video, and write down the time where the selected subtitle appears.
 - Input that time in the corresponding text field
-- Click on resync
+- Click on resync to download the fixed subtitle file
+
+Enjoy !
