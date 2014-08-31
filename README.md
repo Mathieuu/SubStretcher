@@ -14,7 +14,7 @@ The current script version only stretches subtitles, you still need a .srt where
 It is really simple:
 
 - Go to [http://segfaulterror.github.io/SubStretcher/](http://segfaulterror.github.io/SubStretcher/)-
-- Select the encoding of your srt file. It you don't know what is it, try `window-1252` and keep reading.
+- Select the encoding of your srt file. It you don't know what it is, try `window-1252` and keep reading.
 - Select the .srt file to fix
 - The last subtitle of your .srt file appears, browse to find the last real subtitle. Often last subtitles are authors names or the website where you download it. That's not what we want. Take the last subtitle translating something from the video. Also check that there is no encoding error when you browse between subtitles, if weird characters appear, you should start over and select another encoding.
 - Check your video, and write down the time where the selected subtitle appears.
