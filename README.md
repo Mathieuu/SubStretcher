@@ -1,10 +1,13 @@
 ### SubStretcher
 
-####A cure for slipping subtitles
-
 SubStretcher is a simple tool written in Javascript allowing you to easily reync your subtitles. Sometimes subtitles are perfectly synchronized at the begin of a movie but slips little by little. This is due to a difference of framerate between the original video used to synchronized subtitles and your video. SubStretcher fixes that problem for any .srt file. There is a bunch of other software helping to resync subtitles but none of them is as simple and fast as SubStretcher. You should really consider it if you plan to resync the 25 Simpson seasons in Uzbek ;)
 
 The current script version only stretches subtitles, you still need a .srt where the first subtitle is synchronized. The next version should bring the possibility to add a static offset.
+<p align="center">
+<br/>
+<img src="http://www.mathieusavy.com/images/substretcher.jpg" style="border:1px solid #021a40"/>
+<br/>
+</p>
 
 ### How to use it ?
 
