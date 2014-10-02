@@ -72,50 +72,106 @@
 
     <script type="text/javascript">
 
-    var parsedSubs = new Array();
-    var nameFile = "";
-    var indexCurrentlyDisplayedSub = 0;
+      //Format html fields
+      $("#inputTime").mask("99:99:99,999");
 
-     $("#inputTime").mask("99:99:99,999");
+      //Set listeners
+      document.getElementById('fileinput').addEventListener('change', readSrt, false);
+      document.getElementById('btnSubmit').addEventListener('click', processFile, false);
+      document.getElementById('btnPrevious').addEventListener('click', previousSub, false);
+      document.getElementById('btnNext').addEventListener('click', nextSub, false);
+      document.getElementById('comboOldFileEncoding').addEventListener('change', resetInterface, false);
 
-    function readSingleFile(evt) {
-        //Retrieve the first (and only!) File from the FileList object
-        var f = evt.target.files[0];
+      //Variables initialisation
+      var parsedSubs = new Array();
+      var nameFile = "";
+      var indexCurrentlyDisplayedSub = 0;
 
-        if (f) {
-          var r = new FileReader();
-          r.onload = function(e) {
+      /**
+       * Read an srt file and update the page depending on the parsing process result
+       * @param {Event} evt
+       */
+      function readSrt(evt) {
+          //Retrieve the first (and only the first) File from the FileList object
+          var f = evt.target.files[0];
 
-            if(f.size > 5000000){
-              alert("This file is too big");
+          //If the file exists
+          if (f) {
+            var r = new FileReader();
+            r.onload = function(e) {
 
-              $('#btnNext').hide();
-              $('#btnPrevious').hide();
-              $('#labelPreviewNumber').hide();
-              $('#subPreviewText').hide();
-              $('#labelTime').hide();
-              $('#inputTime').hide();
-              $('#labelNewFileEncoding').hide();
-              $('#comboNewFileEncoding').hide();
-              $('#btnSubmit').hide();
+              //Do not process too big files, they cannot be real .srt
+              if(f.size > 5000000){
+                alert("This file is too big");
+                resetInterface(evt);
+                return;
+              }
 
-              return;
+              //Get informations from uploaded file
+              var contents = e.target.result;
+              var splittedContent = contents.split((contents.search("\n\r\n") != -1) ? "\n\r\n" : "\n\n");
+              nameFile = f.name;
+
+              //Build an array of subtitles in memory
+              _.each(splittedContent, function(str){
+                createSrtData(parsedSubs,str);
+              });
+
+              indexCurrentlyDisplayedSub = parsedSubs.length-1;
+              showHiddenInterface(evt);
             }
 
-            var contents = e.target.result;
-            var splittedContent = contents.split((contents.search("\n\r\n") != -1) ? "\n\r\n" : "\n\n");
-            nameFile = f.name;
+            r.readAsText(f, $("#comboOldFileEncoding").val());
+          } else {
+            alert("Failed to load file");
+          }
+        }
 
-            //Build the array
-            _.each(splittedContent, function(str){
-              createSrtData(parsedSubs,str);
-            });
+        /**
+         * Resync subtitles
+         * @param {Event} evt 
+         */
+        function processFile(evt){
 
-            indexCurrentlyDisplayedSub = parsedSubs.length-1;
+          //Remove the last subtitles
+          var numLastSub =  parsedSubs[indexCurrentlyDisplayedSub].number;
+          var timeLastSub = parseTimeStringToInteger($("#inputTime").val());
 
-            $('#labelPreviewNumber').text("Last synced subtitle: " + parsedSubs[indexCurrentlyDisplayedSub].number);
-            $('#subPreviewText').text(parsedSubs[indexCurrentlyDisplayedSub].text);
+          parsedSubs = _.filter(parsedSubs, function(sub){ return sub.number <= numLastSub; });
 
+          //Adjust time
+          var lastCurrentSubtitleTime = parsedSubs[parsedSubs.length-1].startTime;
+          _.each(parsedSubs, function(sub){
+            sub.startTime = getNewTime(sub.startTime, lastCurrentSubtitleTime, timeLastSub);
+            sub.endTime = getNewTime(sub.endTime, lastCurrentSubtitleTime, timeLastSub);
+          });
+
+          //Build final string
+          var finalText = "";
+
+          _.each(parsedSubs, function(sub){
+            finalText += sub.number + "\n";
+            finalText += parseTimeIntegerToString(sub.startTime) + " --> " + parseTimeIntegerToString(sub.endTime);
+
+            if(sub.specificStyling){
+              finalText += "  " + sub.specificStyling;
+            }
+
+            finalText += "\n" + sub.text + "\n\n";
+          });
+
+          var blob = new Blob([finalText], {type: "text/plain;charset=utf-8"});
+          saveAs(blob, nameFile);
+        }
+
+      /** 
+       * Displays next subtitle
+       * @param {Event} evt
+       */
+        function nextSub(evt){
+            if(indexCurrentlyDisplayedSub < parsedSubs.length-1){
+                indexCurrentlyDisplayedSub++;
+            }
 
             if(indexCurrentlyDisplayedSub < parsedSubs.length-1){
               $('#btnNext').show();
@@ -128,57 +184,42 @@
               $('#btnPrevious').hide();
             }
 
-            $('#labelPreviewNumber').show();
-            $('#subPreviewText').show();
-            $('#labelTime').show();
-            $('#inputTime').show();
-            $('#labelNewFileEncoding').show();
-            $('#comboNewFileEncoding').show();
-            $('#btnSubmit').show();
-          }
-          r.readAsText(f, $("#comboOldFileEncoding").val());
-        } else {
-          alert("Failed to load file");
+            $('#labelPreviewNumber').text("Last synced subtitle: " + parsedSubs[indexCurrentlyDisplayedSub].number);
+            $('#subPreviewText').text(parsedSubs[indexCurrentlyDisplayedSub].text);
         }
-      }
 
-      function processFile(evt){
+       /** 
+       * Displays previous subtitle
+       * @param {Event} evt
+       */
+        function previousSub(evt){
+            if(indexCurrentlyDisplayedSub > 0){
+              indexCurrentlyDisplayedSub--;
+            }
 
-        //Remove the last subtitles
-        var numLastSub =  parsedSubs[indexCurrentlyDisplayedSub].number;
-        var timeLastSub = parseTimeStringToInteger($("#inputTime").val());
+            if(indexCurrentlyDisplayedSub < parsedSubs.length-1){
+              $('#btnNext').show();
+            } else {
+              $('#btnNext').hide();
+            }
+            if(indexCurrentlyDisplayedSub > 0){
+               $('#btnPrevious').show();
+            } else {
+              $('#btnPrevious').hide();
+            }
 
-        parsedSubs = _.filter(parsedSubs, function(sub){ return sub.number <= numLastSub; });
+            $('#labelPreviewNumber').text("Last synced subtitle: " + parsedSubs[indexCurrentlyDisplayedSub].number);
+            $('#subPreviewText').text(parsedSubs[indexCurrentlyDisplayedSub].text);
+        }
 
-        //Adjust time
-        var lastCurrentSubtitleTime = parsedSubs[parsedSubs.length-1].startTime;
-        _.each(parsedSubs, function(sub){
-          sub.startTime = getNewTime(sub.startTime, lastCurrentSubtitleTime, timeLastSub);
-          sub.endTime = getNewTime(sub.endTime, lastCurrentSubtitleTime, timeLastSub);
-        });
+      /** 
+       * Show hidden elements of the interface
+       * @param {Event} evt
+       */
+        function showHiddenInterface(evt){      
+          $('#labelPreviewNumber').text("Last synced subtitle: " + parsedSubs[indexCurrentlyDisplayedSub].number);
+          $('#subPreviewText').text(parsedSubs[indexCurrentlyDisplayedSub].text);
 
-        //Build final string
-        var finalText = "";
-
-        _.each(parsedSubs, function(sub){
-          finalText += sub.number + "\n";
-          finalText += parseTimeIntegerToString(sub.startTime) + " --> " + parseTimeIntegerToString(sub.endTime);
-
-          if(sub.specificStyling){
-            finalText += "  " + sub.specificStyling;
-          }
-
-          finalText += "\n" + sub.text + "\n\n";
-        });
-
-        var blob = new Blob([finalText], {type: "text/plain;charset=utf-8"});
-        saveAs(blob, nameFile);
-      }
-
-      function nextSub(e){
-          if(indexCurrentlyDisplayedSub < parsedSubs.length-1){
-              indexCurrentlyDisplayedSub++;
-          }
 
           if(indexCurrentlyDisplayedSub < parsedSubs.length-1){
             $('#btnNext').show();
@@ -191,50 +232,34 @@
             $('#btnPrevious').hide();
           }
 
-          $('#labelPreviewNumber').text("Last synced subtitle: " + parsedSubs[indexCurrentlyDisplayedSub].number);
-          $('#subPreviewText').text(parsedSubs[indexCurrentlyDisplayedSub].text);
-      }
+          $('#labelPreviewNumber').show();
+          $('#subPreviewText').show();
+          $('#labelTime').show();
+          $('#inputTime').show();
+          $('#labelNewFileEncoding').show();
+          $('#comboNewFileEncoding').show();
+          $('#btnSubmit').show();
+        }
 
-      function previousSub(e){
-          if(indexCurrentlyDisplayedSub > 0){
-            indexCurrentlyDisplayedSub--;
-          }
+       /** 
+       * Reset the interface
+       * @param {Event} evt
+       */
+        function resetInterface(evt){
 
-          if(indexCurrentlyDisplayedSub < parsedSubs.length-1){
-            $('#btnNext').show();
-          } else {
-            $('#btnNext').hide();
-          }
-          if(indexCurrentlyDisplayedSub > 0){
-             $('#btnPrevious').show();
-          } else {
-            $('#btnPrevious').hide();
-          }
+          $('#fileinput').filestyle('clear');
 
-          $('#labelPreviewNumber').text("Last synced subtitle: " + parsedSubs[indexCurrentlyDisplayedSub].number);
-          $('#subPreviewText').text(parsedSubs[indexCurrentlyDisplayedSub].text);
-      }
+          $('#btnNext').hide();
+          $('#btnPrevious').hide();
+          $('#labelPreviewNumber').hide();
+          $('#subPreviewText').hide();
+          $('#labelTime').hide();
+          $('#inputTime').hide();
+          $('#labelNewFileEncoding').hide();
+          $('#comboNewFileEncoding').hide();
+          $('#btnSubmit').hide();
+        }
 
-      function oldFileEncodingChanged(e){
-
-        $('#fileinput').filestyle('clear');
-
-        $('#btnNext').hide();
-        $('#btnPrevious').hide();
-        $('#labelPreviewNumber').hide();
-        $('#subPreviewText').hide();
-        $('#labelTime').hide();
-        $('#inputTime').hide();
-        $('#labelNewFileEncoding').hide();
-        $('#comboNewFileEncoding').hide();
-        $('#btnSubmit').hide();
-      }
-
-      document.getElementById('fileinput').addEventListener('change', readSingleFile, false);
-      document.getElementById('btnSubmit').addEventListener('click', processFile, false);
-      document.getElementById('btnPrevious').addEventListener('click', previousSub, false);
-      document.getElementById('btnNext').addEventListener('click', nextSub, false);
-      document.getElementById('comboOldFileEncoding').addEventListener('change', oldFileEncodingChanged, false);
       </script>
 
     </body>
